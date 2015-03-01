@@ -31,14 +31,19 @@ html, body{
 	var canvas = document.getElementById('imgCanvas');
     var context = canvas.getContext('2d');
 	var smallfiles = [];
-	var scale = 2;
+
 	var currentIndex;
 
       var imageObj = new Image();
       imageObj.onload = function() {
  		context.clearRect(0,0,canvas.width,canvas.height);
         context.save();
-		context.drawImage(imageObj,canvas.width/scale-imageObj.width/scale,canvas.height/scale-imageObj.width/scale);
+		// translate context to center of canvas
+      context.translate(canvas.width / 2, canvas.height / 2);
+
+      // scale y component
+      context.scale(0.7, 0.7);
+		context.drawImage(imageObj,0,0); //,canvas.width * 0.5/4-imageObj.width/2,canvas.height * 0.5/4-imageObj.height/2);
 		context.restore();
       };
 	  
@@ -46,17 +51,20 @@ html, body{
 	var angleInDegrees=0;
 	$("#clockwise").click(function(){ 
         angleInDegrees+=90;
-        drawRotated(angleInDegrees);
-		//RotateFile(smallfiles[currentIndex],angleInDegrees);
+        //drawRotated(angleInDegrees);
+		RotateFile(smallfiles[currentIndex],angleInDegrees);
+		loadImg();
     });
 
     $("#counterclockwise").click(function(){ 
         angleInDegrees-=90;
-        drawRotated(angleInDegrees);
-		//RotateFile(smallfiles[currentIndex],angleInDegrees);
+        //drawRotated(angleInDegrees);
+		RotateFile(smallfiles[currentIndex],angleInDegrees);
+		loadImg();
     });
 
     function drawRotated(degrees){
+		var scale = 2;
         context.clearRect(0,0,canvas.width,canvas.height);
         context.save();
         context.translate(canvas.width/scale,canvas.height/scale);
@@ -67,27 +75,6 @@ html, body{
         context.restore();
     }
 	
-	function RotateFile(file,degrees) {
-    var reader = new FileReader();
-    reader.onloadend = function() {
-       var tempImg = new Image();
-       tempImg.src = reader.result;
-       tempImg.onload = function() {
-        var tempW = tempImg.width;
-        var tempH = tempImg.height;
-        var canvas = document.createElement('canvas');
-        canvas.width = tempW;
-        canvas.height = tempH;
-        var ctx = canvas.getContext("2d");
-		ctx.translate(canvas.width/scale,canvas.height/scale);
-        ctx.rotate(degrees*Math.PI/180);
-        ctx.drawImage(this, 0, 0, tempW, tempH);
-        var dataURL = canvas.toDataURL("image/jpeg");
-		smallfiles[currentIndex] = dataURItoFile(dataURL, file)
-      }
-   }
-   reader.readAsDataURL(file);
-}
 
 	var result = '';
 fileInput.addEventListener('change', function(e) {
@@ -107,18 +94,48 @@ fileInput.addEventListener('change', function(e) {
 		finally {}
 	}
 });
-
 $("#filesInfo").on("click","li a", function(){
-	 var reader = new FileReader();
-		reader.onload = function(e) {
-           imageObj.src = reader.result; 
-		   context = canvas.getContext('2d');
-         }
-		 currentIndex = $(this).parent().index();
-		 reader.readAsDataURL(smallfiles[currentIndex]);  
+		currentIndex = $(this).parent().index();
+loadImg();
 		return false;
   });
-  
+  function loadImg()  {
+  	 var reader = new FileReader();
+		reader.onload = function(e) {
+           imageObj.src = reader.result; 
+		   //context = canvas.getContext('2d');
+         }		 
+		 reader.readAsDataURL(smallfiles[currentIndex]);  
+  }
+ 
+	function RotateFile(file,degrees) {
+    var reader = new FileReader();
+    reader.onloadend = function() {	
+       var tempImg = new Image();
+       tempImg.src = reader.result;
+       tempImg.onload = function() {
+	   var scale = 2;
+        var cnvs = document.createElement('canvas');
+        cnvs.width= this.width;
+        cnvs.height= this.height;
+        var ctx = cnvs.getContext("2d");
+		ctx.drawImage(this, 0, 0, this.width, this.height);
+		
+		ctx.clearRect(0,0,cnvs.width,cnvs.height);
+        ctx.save();
+		ctx.translate(cnvs.width/scale,cnvs.height/scale);
+        ctx.rotate(degrees*Math.PI/180);
+		ctx.drawImage(this,-this.width/scale,-this.width/scale);
+		ctx.restore();
+        
+		var dataURL = cnvs.toDataURL("image/jpeg");
+		smallfiles[currentIndex] = dataURItoFile(dataURL, file);
+
+      }
+   }
+   reader.readAsDataURL(file);
+}
+ 
  function resizeFile(file) {
     var reader = new FileReader();
     reader.onloadend = function() {
@@ -140,12 +157,12 @@ $("#filesInfo").on("click","li a", function(){
                tempH = MAX_HEIGHT;
             }
         }
-        var canvas = document.createElement('canvas');
-        canvas.width = tempW;
-        canvas.height = tempH;
-        var ctx = canvas.getContext("2d");
+        var cnvs = document.createElement('canvas');
+        cnvs.width = tempW;
+        cnvs.height = tempH;
+        var ctx = cnvs.getContext("2d");
         ctx.drawImage(this, 0, 0, tempW, tempH);
-        var dataURL = canvas.toDataURL("image/jpeg");
+        var dataURL = cnvs.toDataURL("image/jpeg");
 		var reducedFile = dataURItoFile(dataURL, file)
 		smallfiles.push(reducedFile);
 		result += '<li><a href="" >' + file.name + ' </a></li>';
