@@ -4,6 +4,18 @@
  */
 function logconsole(msg){ console.log(msg);}
 
+function isHTML5Compatible(){
+  var cnvs = document.createElement('canvas');
+  if (window.FileReader && window.Image && cnvs.getContext("2d") && (window.File || window.Blob))
+  {
+    return true;
+  }
+  else
+    {
+      return false;
+    }
+}
+
 function dataURItoFile(dataURI, file) {
     // convert base64/URLEncoded data component to raw binary data held in a string
     var byteString;
@@ -20,7 +32,15 @@ function dataURItoFile(dataURI, file) {
     for (var i = 0; i < byteString.length; i++) {
         ia[i] = byteString.charCodeAt(i);
     }
-    var generatedFile = new File([ia], file.name, {type:mimeString});
+    var generatedFile;
+    try{
+      generatedFile = new File([ia], file.name, {type:mimeString});
+    }
+    catch(exception){
+      generatedFile = new Blob([ia], {type:mimeString});
+    }
+    finally {}
+    
 	return generatedFile;
 }
 
@@ -28,7 +48,7 @@ var smallfiles = [];
 
 function resizeFile(file, callback) {
   if (file != null && file.type.match('image.*')) {
-        var reader = new FileReader();
+    var reader = new FileReader();
     reader.onloadend = function() {
       logconsole(file.name +"reader loaded");
        var tempImg = new Image();

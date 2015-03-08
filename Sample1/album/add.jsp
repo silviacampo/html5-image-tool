@@ -30,9 +30,9 @@
      String s = request.getParameter("scope");
      s = s == null ? "" : s;
     %>
-    <form action="addAlbum.do" name="albumForm" method="POST" enctype="multipart/form-data">
+    <form action="addAlbum.do" name="albumForm" id="albumForm" method="POST" enctype="multipart/form-data">
      <fieldset class="myfieldset"><legend><%=bundle.getString("add.legend")%></legend>
-      <table class="formTable">
+       <table style="text-align: left; width: 100%;" border="0" cellpadding="2" cellspacing="2">
        <tbody>
         <tr>
          <td style="width: 69px;"><%=bundle.getString("add.nameLbl")%></td>
@@ -59,7 +59,8 @@
         </tr>
         <tr>
          <td colspan="4">
-          <%=bundle.getString("add.selectImages")%> <input type="file" name="photos" id="photos" multiple="multiple" > 
+          <%=bundle.getString("add.selectImages")%> <input type="file" name="photos" id="photos" multiple="multiple" >
+          <span class="myNote"><%=bundle.getString("add.noteMultipleFiles")%></span>
          </td>
         </tr>
         <tr>
@@ -82,32 +83,38 @@
      
      $("#button").click(function(){
         openDialog();
-        var descriptionValue = $("#description").val();
-        var nameValue = $("#name").val();
-        var scopeValue = $("#scope").val();
+        try{
+          var descriptionValue = $("#description").val();
+          var nameValue = $("#name").val();
+          var scopeValue = $("#scope").val();
  
-     var data = new FormData();
-    data.append('description', descriptionValue);
-    data.append('name', nameValue);   
-    data.append('scope', scopeValue); 
+          var data = new FormData();
+         data.append('description', descriptionValue);
+         data.append('name', nameValue);   
+         data.append('scope', scopeValue); 
  
-    jQuery.each(smallfiles, function(i, file) {
-      data.append('photos', file);
-    });
-    $.ajax({
-    url: "addAlbum.do",
-    data: data,
-    cache: false,
-    contentType: false,
-    processData: false,
-    type: 'POST',
-    success: function(data){
-        document.open();
-        document.write(data);
-        document.close();
-        closeDialog();
-    }
-});
+        jQuery.each(smallfiles, function(i, file) {
+          data.append('photos', file);
+        });
+          $.ajax({
+          url: "addAlbum.do",
+          data: data,
+          cache: false,
+          contentType: false,
+          processData: false,
+          type: 'POST',
+          success: function(data){
+              document.open();
+              document.write(data);
+              document.close();
+              closeDialog();
+          }
+           });
+        }
+        catch(exception){
+          $('#albumForm').submit();
+        }
+        finally {}
 });
 
 $('#photos').change(function(e) {
@@ -115,13 +122,21 @@ $('#photos').change(function(e) {
     openDialog();    
     $("#button").prop("disabled", true);
 	smallfiles = [];
-    try{
-      processFile(this.files,0);
+    if(isHTML5Compatible()){
+      try{
+        processFile(this.files,0);
+      }
+      catch(exception){}
+      finally {}
     }
-    catch(exception){}
-    finally {}
-
-});
+    else
+    {
+      smallfiles = this.files;
+      $("#button").removeAttr('disabled');
+      closeDialog();
+      resetDialog();
+    }
+ });
 
 function processFile(files,index)
 {
@@ -142,8 +157,6 @@ function processFile(files,index)
     });
     
 }
-
-
 </script>
  </body>
 </html>
